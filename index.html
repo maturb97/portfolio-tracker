@@ -675,113 +675,50 @@
             });
         }
 
-        let chartsCreated = false;
-
         function updateCharts() {
-            // Only create charts once when data is ready
-            if (!chartsCreated && portfolio.totalValue > 0) {
-                createValueChart();
-                createAllocationChart();
-                chartsCreated = true;
-            }
-        }
-
-        function createValueChart() {
-            const ctx = document.getElementById('value-chart').getContext('2d');
+            // Replace charts with simple text for now to debug the issue
+            const valueChartContainer = document.getElementById('value-chart').parentElement;
+            const allocationChartContainer = document.getElementById('allocation-chart').parentElement;
             
-            // Simple fixed data that never changes
-            const labels = [];
-            const data = [];
-            const today = new Date();
+            valueChartContainer.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4">Portfolio Value Over Time</h3>
+                <div class="flex items-center justify-center h-64 bg-gray-50 rounded">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600">zł ${portfolio.totalValue.toLocaleString('pl-PL')}</div>
+                        <div class="text-gray-500 mt-2">Current Portfolio Value</div>
+                        <div class="text-sm text-gray-400 mt-1">Chart disabled to prevent infinite growth issue</div>
+                    </div>
+                </div>
+            `;
             
-            // Create 30 days of completely static data
-            const staticValues = [
-                820000, 835000, 810000, 860000, 880000, 850000, 890000, 910000,
-                880000, 920000, 940000, 910000, 930000, 960000, 940000, 980000,
-                950000, 970000, 990000, 960000, 980000, 1010000, 990000, 1020000,
-                1000000, 1030000, 1010000, 1040000, 1020000, 1010000, portfolio.totalValue
-            ];
-            
-            for (let i = 0; i < 31; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - (30 - i));
-                labels.push(date.toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' }));
-                data.push(staticValues[i]);
-            }
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Portfolio Value (zł)',
-                        data: data,
-                        borderColor: '#3B82F6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'zł ' + (value / 1000).toFixed(0) + 'k';
-                                }
+            allocationChartContainer.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4">Market Allocation</h3>
+                <div class="flex items-center justify-center h-64 bg-gray-50 rounded">
+                    <div class="text-center">
+                        <div class="text-lg font-semibold text-gray-700">Portfolio Breakdown</div>
+                        <div class="mt-4 space-y-2">
+                            ${Array.from(portfolio.holdings.values())
+                                .reduce((acc, holding) => {
+                                    const market = holding.market || 'Unknown';
+                                    acc[market] = (acc[market] || 0) + (holding.marketValue || 0);
+                                    return acc;
+                                }, {})
+                                .constructor === Object ? 
+                                Object.entries(
+                                    Array.from(portfolio.holdings.values())
+                                        .reduce((acc, holding) => {
+                                            const market = holding.market || 'Unknown';
+                                            acc[market] = (acc[market] || 0) + (holding.marketValue || 0);
+                                            return acc;
+                                        }, {})
+                                ).map(([market, value]) => 
+                                    `<div class="text-sm"><span class="font-medium">${market}:</span> zł ${value.toLocaleString('pl-PL')}</div>`
+                                ).join('') : ''
                             }
-                        }
-                    }
-                }
-            });
-        }
-
-        function createAllocationChart() {
-            const ctx = document.getElementById('allocation-chart').getContext('2d');
-            
-            const marketData = new Map();
-            portfolio.holdings.forEach(holding => {
-                const market = holding.market || 'Unknown';
-                const value = marketData.get(market) || 0;
-                marketData.set(market, value + (holding.marketValue || 0));
-            });
-            
-            const labels = Array.from(marketData.keys());
-            const data = Array.from(marketData.values());
-            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderWidth: 3,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true
-                            }
-                        }
-                    }
-                }
-            });
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function loadSampleData() {
