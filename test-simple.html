@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical API Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        .test-result { margin: 10px 0; padding: 10px; background: white; border-radius: 5px; }
+        .success { border-left: 4px solid #22c55e; }
+        .error { border-left: 4px solid #ef4444; }
+        .loading { border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Historical Portfolio Calculation Test</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        const results = document.getElementById('test-results');
+        
+        function addResult(message, type = 'loading') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        async function testAPIs() {
+            addResult('🚀 Starting API tests...');
+            
+            // Test 1: Crypto historical price
+            try {
+                addResult('Testing Bitcoin historical price (Jan 31, 2019)...');
+                const btcResponse = await fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=1&toTs=1548979200');
+                const btcData = await btcResponse.json();
+                
+                if (btcData.Response === 'Success' && btcData.Data && btcData.Data.Data[0]) {
+                    const price = btcData.Data.Data[0].close;
+                    addResult(`✅ Bitcoin Jan 31, 2019: $${price}`, 'success');
+                } else {
+                    addResult('❌ Bitcoin historical API failed', 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Bitcoin test error: ${error.message}`, 'error');
+            }
+            
+            // Test 2: Polish stock historical
+            try {
+                addResult('Testing CDR.WA historical price (Jan 31, 2019)...');
+                const cdrResponse = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/CDR.WA?period1=1548979200&period2=1549065600&interval=1d');
+                const cdrData = await cdrResponse.json();
+                
+                const quotes = cdrData.chart?.result?.[0]?.indicators?.quote?.[0];
+                if (quotes && quotes.close && quotes.close[0]) {
+                    const price = quotes.close[0];
+                    addResult(`✅ CDR.WA Jan 31, 2019: ${price} PLN`, 'success');
+                } else {
+                    addResult('❌ CDR.WA historical API failed', 'error');
+                }
+            } catch (error) {
+                addResult(`❌ CDR test error: ${error.message}`, 'error');
+            }
+            
+            // Test 3: USD/PLN exchange rate
+            try {
+                addResult('Testing USD/PLN exchange rate (Jan 31, 2019)...');
+                const usdResponse = await fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/2019-01-31/');
+                const usdData = await usdResponse.json();
+                
+                if (usdData.rates && usdData.rates[0]) {
+                    const rate = usdData.rates[0].mid;
+                    addResult(`✅ USD/PLN Jan 31, 2019: ${rate}`, 'success');
+                } else {
+                    addResult('❌ USD/PLN API failed', 'error');
+                }
+            } catch (error) {
+                addResult(`❌ USD/PLN test error: ${error.message}`, 'error');
+            }
+            
+            // Test 4: Load sample transactions
+            try {
+                addResult('Testing Google Sheets transaction loading...');
+                const sheetsResponse = await fetch('https://sheets.googleapis.com/v4/spreadsheets/10NuWmVJXpI1xeiiFXY5jtGHQ_SNcRbQUGS2kRyGmAKg/values/Sheet1!A1:I6?key=AIzaSyCOQSG4yD4SzdrQDJH2oVJGazduyzgwq04');
+                const sheetsData = await sheetsResponse.json();
+                
+                if (sheetsData.values && sheetsData.values.length > 1) {
+                    addResult(`✅ Loaded ${sheetsData.values.length - 1} sample transactions`, 'success');
+                    
+                    // Show first few transactions
+                    for (let i = 1; i < Math.min(4, sheetsData.values.length); i++) {
+                        const row = sheetsData.values[i];
+                        addResult(`   📊 ${row[0]} | ${row[1]} | ${row[3]} | ${row[4]} units`, 'success');
+                    }
+                } else {
+                    addResult('❌ Google Sheets loading failed', 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Sheets test error: ${error.message}`, 'error');
+            }
+            
+            addResult('🎯 API testing complete!');
+        }
+        
+        // Run tests when page loads
+        testAPIs();
+    </script>
+</body>
+</html>

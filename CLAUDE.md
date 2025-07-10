@@ -393,13 +393,144 @@ https://sheets.googleapis.com/v4/spreadsheets/10NuWmVJXpI1xeiiFXY5jtGHQ_SNcRbQUG
 - [ ] Mobile performance acceptable
 - [ ] Memory usage optimized
 
+## 📊 Historical Data System Architecture
+
+### **Google Sheets Structure**
+```
+Sheet1: Transactions (existing - 294 transactions)
+Sheet2: HistoricalData (to be created)
+Columns:
+A: Date (YYYY-MM-DD)
+B: PortfolioValue (PLN)  
+C: USD_PLN_Rate
+D: Holdings_JSON (stringified holdings data)
+E: LastUpdated (timestamp)
+```
+
+### **Historical Price APIs (All Tested & Working)**
+
+| Asset Type | Primary API | Fallback | Historical Data |
+|------------|-------------|----------|-----------------|
+| **US Stocks** | Yahoo Finance | None | ✅ 1990s+ |
+| **Polish Stocks** | Yahoo Finance (.WA suffix) | Manual fallback | ✅ 2000s+ |
+| **PLI Special** | MarketWatch scraping | Manual (13.4 PLN) | ❓ TBD |
+| **Cryptocurrency** | CryptoCompare | CoinGecko | ✅ 2010+ |
+| **USD/PLN Rate** | NBP API | None needed | ✅ 2002+ |
+| **Commodities** | Metals API | Manual fallback | ❓ Limited |
+
+### **Working API Examples**
+```javascript
+// Crypto Historical: CryptoCompare
+https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=1&toTs=1548979200
+// Result: Bitcoin $3,461.63 on Jan 31, 2019
+
+// Polish Stocks: Yahoo Finance  
+https://query1.finance.yahoo.com/v8/finance/chart/CDR.WA?period1=1548979200&period2=1549065600&interval=1d
+// Result: CDR.WA historical OHLC data
+
+// Exchange Rates: NBP
+https://api.nbp.pl/api/exchangerates/rates/a/usd/2019-01-31/
+// Result: USD/PLN = 3.7271 on Jan 31, 2019
+```
+
+## 🚀 Implementation Priorities
+
+### **PHASE 1: Historical Data Foundation** (Current)
+1. ✅ **Test historical calculation** on first 100 transactions (Nov 2019 - July 2022)
+2. ✅ **Validate API responses** for all asset types
+3. ✅ **Create Google Sheets HistoricalData tab**
+4. ✅ **Build daily portfolio value calculation engine**
+
+### **PHASE 2: Production Historical System**
+1. **Calculate full historical data** from first transaction (2019) to present
+2. **Implement "Recalc Last 30 Days" button** for monthly updates
+3. **Add error handling** for missing prices (use previous day's price)
+4. **Optimize performance** with caching and batch processing
+
+### **PHASE 3: Enhanced UI/UX**
+1. **Modernize design** - Replace default fonts, improve visual hierarchy
+2. **Rebuild working charts** with real historical data (no random generation)
+3. **Add proper rounding** - Stocks: 1 decimal, Crypto: full precision
+4. **Improve mobile experience**
+
+### **PHASE 4: Advanced Features**
+1. **Performance analytics** vs benchmarks
+2. **Tax optimization** suggestions
+3. **Portfolio rebalancing** recommendations
+4. **Export functionality** for tax filing
+
+## 🔧 Technical Specifications
+
+### **Rounding Rules**
+```javascript
+// US/PL Stocks: 1 decimal place
+stockPrice.toFixed(1)  // $100.5, 150.2 PLN
+
+// Cryptocurrency: Full precision
+cryptoPrice  // $111,555.123456
+
+// Portfolio totals: 2 decimal places  
+portfolioValue.toFixed(2)  // zł 1,250,000.00
+```
+
+### **Missing Data Handling**
+```javascript
+// Missing historical prices
+if (!price) {
+    price = getPreviousAvailablePrice(symbol, date);
+}
+
+// Weekend/holiday gaps
+if (isWeekend(date) && isStock(symbol)) {
+    price = getPreviousBusinessDayPrice(symbol, date);
+}
+
+// Polish stocks not on WSE
+if (symbol === 'PLI') {
+    price = 13.4; // NewConnect manual price
+}
+```
+
+### **Calculation Engine**
+```javascript
+// Daily portfolio calculation
+1. Load all transactions up to date
+2. Apply FIFO cost basis calculations  
+3. Fetch historical prices for all holdings
+4. Get USD/PLN rate for date
+5. Calculate total portfolio value in PLN
+6. Store result in Google Sheets HistoricalData tab
+```
+
+## 🧪 Testing Status
+
+### **✅ Completed Tests**
+- PLI MarketWatch scraping: ✅ 13.4 PLN
+- Bitcoin historical: ✅ $3,461.63 (Jan 31, 2019)  
+- CDR.WA historical: ✅ 145-199 PLN range (Jan 2019)
+- USD/PLN rates: ✅ 3.72-3.78 range (Jan 2019)
+- Google Sheets: ✅ 294 transactions loaded
+- Netlify Functions: ✅ All price fetching working
+
+### **🔄 Current Test**
+- **First 100 transactions calculation** (Nov 2019 - July 2022)
+- Assets: BTC, ETH, DOT, NEM, BATS, MO, CDR, ACP, PLI, XTB, GPW, Silver
+- Expected output: Daily portfolio values with proper FIFO calculations
+
+### **📝 Next Session Priorities**
+1. **Complete historical test** and validate results
+2. **Create Google Sheets HistoricalData tab**
+3. **Build production historical calculation system**
+4. **Implement recalculation button**
+5. **Restore working charts** with real data
+
 ## 🚀 Next Steps & Priorities
 
 ### **Immediate Actions** (Next Session)
-1. **Debug Google Sheets API** connection
-2. **Verify VALE calculation** against real data
-3. **Fix main application** script loading issues
-4. **Test with real transaction data**
+1. **Validate historical calculation test results**
+2. **Create HistoricalData sheet tab in Google Sheets**
+3. **Build production historical data system**
+4. **Implement daily portfolio calculation with error handling**
 
 ### **Short-term Enhancements**
 1. **Real-time price updates** (WebSocket integration)

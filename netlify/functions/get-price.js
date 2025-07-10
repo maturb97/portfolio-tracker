@@ -25,29 +25,51 @@ exports.handler = async (event, context) => {
         
         // Handle different asset types
         if (type === 'crypto' || market === 'CRYPTO') {
-            // Cryptocurrency prices
-            const coinIds = {
-                'Bitcoin': 'bitcoin',
-                'BTC': 'bitcoin',
-                'Ethereum': 'ethereum', 
-                'ETH': 'ethereum',
-                'DOT': 'polkadot',
-                'LTC': 'litecoin'
+            // Cryptocurrency prices via CryptoCompare
+            const cryptoSymbols = {
+                'Bitcoin': 'BTC', 'BTC': 'BTC',
+                'Ethereum': 'ETH', 'ETH': 'ETH',
+                'DOT': 'DOT', 'LTC': 'LTC'
             };
             
-            const coinId = coinIds[symbol] || symbol.toLowerCase();
+            const cryptoSymbol = cryptoSymbols[symbol] || symbol.toUpperCase();
             
             try {
-                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
+                // Try CryptoCompare first
+                const response = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${cryptoSymbol}&tsyms=USD`);
                 const data = await response.json();
-                price = data[coinId]?.usd;
-                source = 'coingecko';
                 
-                if (price) {
+                if (data.USD && data.USD > 0) {
+                    price = data.USD;
+                    source = 'cryptocompare';
                     console.log(`✅ Fetched crypto ${symbol}: $${price}`);
+                } else {
+                    throw new Error('No USD price in CryptoCompare response');
                 }
             } catch (error) {
-                console.error(`CoinGecko failed for ${symbol}:`, error.message);
+                console.error(`CryptoCompare failed for ${symbol}:`, error.message);
+                
+                // Fallback to CoinGecko (current prices only)
+                try {
+                    const coinIds = {
+                        'BTC': 'bitcoin', 'ETH': 'ethereum', 
+                        'DOT': 'polkadot', 'LTC': 'litecoin'
+                    };
+                    const coinId = coinIds[cryptoSymbol];
+                    
+                    if (coinId) {
+                        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
+                        const data = await response.json();
+                        price = data[coinId]?.usd;
+                        source = 'coingecko-fallback';
+                        
+                        if (price) {
+                            console.log(`✅ Fetched crypto ${symbol} via fallback: $${price}`);
+                        }
+                    }
+                } catch (fallbackError) {
+                    console.error(`CoinGecko fallback failed for ${symbol}:`, fallbackError.message);
+                }
             }
             
         } else if (type === 'commodity' || market === 'PHYSICAL') {
@@ -121,9 +143,27 @@ exports.handler = async (event, context) => {
             // Handle Polish stocks
             if (market === 'PL' || ['CDR', 'ACP', 'PLI', 'XTB', 'GPW', 'BBT', 'STX', 'ASB', 'PCR'].includes(symbol)) {
                 if (symbol === 'PLI') {
-                    // PLI is on NewConnect - manual price
-                    price = 13.4;
-                    source = 'manual-newconnect';
+                    // PLI from MarketWatch scraping
+                    try {
+                        const marketwatchUrl = 'https://www.marketwatch.com/investing/stock/pli?countrycode=pl';
+                        const response = await fetch(marketwatchUrl);
+                        const html = await response.text();
+                        
+                        // Extract price using regex to find the bg-quote element
+                        const priceMatch = html.match(/<bg-quote[^>]*>([0-9.,]+)</);
+                        if (priceMatch && priceMatch[1]) {
+                            price = parseFloat(priceMatch[1].replace(',', '.'));
+                            source = 'marketwatch-pli';
+                            console.log(`✅ Fetched PLI from MarketWatch: ${price} PLN`);
+                        } else {
+                            throw new Error('Price not found in MarketWatch HTML');
+                        }
+                    } catch (error) {
+                        console.error(`MarketWatch PLI fetch failed:`, error.message);
+                        // Fallback to manual price
+                        price = 13.4;
+                        source = 'fallback-pli';
+                    }
                 } else {
                     // Try Yahoo Finance with Warsaw suffix
                     const polishSymbol = symbol + '.WA';
