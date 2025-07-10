@@ -1,5 +1,6 @@
 [build]
-  publish = "."
+  command = "mkdir -p dist && cp *.html *.js *.css *.md *.json dist/ 2>/dev/null || true"
+  publish = "dist"
   functions = "netlify/functions"
 
 [build.environment]

@@ -4,7 +4,7 @@
   "description": "Elite Portfolio Analytics Platform with Netlify Functions",
   "main": "simple.html",
   "scripts": {
-    "build": "echo 'Static site deployed'"
+    "build": "mkdir -p dist && cp *.html *.js *.css *.md *.json dist/ 2>/dev/null || true && echo 'Build complete'"
   },
   "dependencies": {},
   "keywords": [
