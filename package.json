@@ -4,23 +4,14 @@
   "description": "Elite Portfolio Analytics Platform with Netlify Functions",
   "main": "simple.html",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "echo 'No build step required for static site'",
-    "deploy": "netlify deploy --prod"
+    "build": "echo 'Static site deployed'"
   },
-  "dependencies": {
-    "node-fetch": "^2.7.0"
-  },
-  "devDependencies": {
-    "netlify-cli": "^17.10.1"
-  },
+  "dependencies": {},
   "keywords": [
     "portfolio",
     "tracker",
     "analytics",
-    "finance",
-    "netlify",
-    "serverless"
+    "finance"
   ],
   "author": "Portfolio Tracker",
   "license": "MIT"
