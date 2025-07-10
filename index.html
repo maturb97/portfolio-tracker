@@ -675,150 +675,113 @@
             });
         }
 
+        let chartsCreated = false;
+
         function updateCharts() {
-            updateValueChart();
-            updateAllocationChart();
+            // Only create charts once when data is ready
+            if (!chartsCreated && portfolio.totalValue > 0) {
+                createValueChart();
+                createAllocationChart();
+                chartsCreated = true;
+            }
         }
 
-        // Store chart instances to prevent multiple updates
-        let portfolioChart = null;
-        let allocationChart = null;
-        let chartsInitialized = false;
-        
-        function updateValueChart() {
+        function createValueChart() {
             const ctx = document.getElementById('value-chart').getContext('2d');
             
-            // Skip if portfolio value is invalid
-            if (!portfolio.totalValue || portfolio.totalValue <= 0 || !isFinite(portfolio.totalValue)) {
-                console.warn('Invalid portfolio value for chart:', portfolio.totalValue);
-                return;
+            // Simple fixed data that never changes
+            const labels = [];
+            const data = [];
+            const today = new Date();
+            
+            // Create 30 days of completely static data
+            const staticValues = [
+                820000, 835000, 810000, 860000, 880000, 850000, 890000, 910000,
+                880000, 920000, 940000, 910000, 930000, 960000, 940000, 980000,
+                950000, 970000, 990000, 960000, 980000, 1010000, 990000, 1020000,
+                1000000, 1030000, 1010000, 1040000, 1020000, 1010000, portfolio.totalValue
+            ];
+            
+            for (let i = 0; i < 31; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - (30 - i));
+                labels.push(date.toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' }));
+                data.push(staticValues[i]);
             }
             
-            // Only create chart once, then update data
-            if (!portfolioChart) {
-                console.log('Creating portfolio chart with value:', portfolio.totalValue);
-                
-                // Generate FIXED historical data that never changes
-                const data = [];
-                const today = new Date();
-                const currentValue = portfolio.totalValue;
-                
-                // Create realistic but STATIC historical data
-                const historicalValues = [
-                    currentValue * 0.82, currentValue * 0.84, currentValue * 0.81, currentValue * 0.86,
-                    currentValue * 0.88, currentValue * 0.85, currentValue * 0.89, currentValue * 0.91,
-                    currentValue * 0.88, currentValue * 0.92, currentValue * 0.94, currentValue * 0.91,
-                    currentValue * 0.93, currentValue * 0.96, currentValue * 0.94, currentValue * 0.98,
-                    currentValue * 0.95, currentValue * 0.97, currentValue * 0.99, currentValue * 0.96,
-                    currentValue * 0.98, currentValue * 1.01, currentValue * 0.99, currentValue * 1.02,
-                    currentValue * 1.00, currentValue * 1.03, currentValue * 1.01, currentValue * 1.04,
-                    currentValue * 1.02, currentValue * 1.01, currentValue
-                ];
-                
-                for (let i = 0; i < 31; i++) {
-                    const date = new Date(today);
-                    date.setDate(date.getDate() - (30 - i));
-                    
-                    data.push({
-                        x: date,
-                        y: Math.round(historicalValues[i] * 100) / 100
-                    });
-                }
-                
-                portfolioChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        datasets: [{
-                            label: 'Portfolio Value',
-                            data: data,
-                            borderColor: '#3B82F6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.1
-                        }]
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Portfolio Value (zł)',
+                        data: data,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: false, // Completely disable animations
-                        interaction: {
-                            intersect: false
-                        },
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    displayFormats: {
-                                        day: 'MMM dd'
-                                    }
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'zł ' + (value / 1000).toFixed(0) + 'k';
                                 }
-                            },
-                            y: {
-                                beginAtZero: false,
-                                min: Math.min(...data.map(d => d.y)) * 0.98,
-                                max: Math.max(...data.map(d => d.y)) * 1.02,
-                                ticks: {
-                                    callback: function(value) {
-                                        return 'zł ' + value.toLocaleString('pl-PL', {minimumFractionDigits: 0});
-                                    }
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
                             }
                         }
                     }
-                });
-            } else {
-                console.log('Chart already exists, skipping recreation');
-            }
+                }
+            });
         }
 
-        function updateAllocationChart() {
+        function createAllocationChart() {
             const ctx = document.getElementById('allocation-chart').getContext('2d');
             
-            // Only create chart once
-            if (!allocationChart) {
-                console.log('Creating allocation chart');
-                
-                const marketData = new Map();
-                portfolio.holdings.forEach(holding => {
-                    const market = holding.market || 'Unknown';
-                    marketData.set(market, (marketData.get(market) || 0) + holding.marketValue);
-                });
-                
-                const labels = Array.from(marketData.keys());
-                const data = Array.from(marketData.values());
-                const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
-                
-                allocationChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: colors.slice(0, labels.length),
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: false, // Disable animations
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
+            const marketData = new Map();
+            portfolio.holdings.forEach(holding => {
+                const market = holding.market || 'Unknown';
+                const value = marketData.get(market) || 0;
+                marketData.set(market, value + (holding.marketValue || 0));
+            });
+            
+            const labels = Array.from(marketData.keys());
+            const data = Array.from(marketData.values());
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
                             }
                         }
                     }
-                });
-            } else {
-                console.log('Allocation chart already exists, skipping recreation');
-            }
+                }
+            });
         }
 
         function loadSampleData() {
