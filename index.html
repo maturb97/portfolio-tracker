@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Portfolio Analytics Platform</title>
+    <meta name="description" content="Professional portfolio tracker with advanced analytics, tax optimization, and risk management">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold text-gray-800">📊 Elite Portfolio Analytics</h1>
+                    <span id="last-update" class="text-sm text-gray-500">Loading...</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <select id="currency-selector" class="px-3 py-1 border rounded-md text-sm">
+                        <option value="USD">USD ($)</option>
+                        <option value="PLN" selected>PLN (zł)</option>
+                    </select>
+                    <select id="time-period" class="px-3 py-1 border rounded-md text-sm">
+                        <option value="1M">1M</option>
+                        <option value="3M">3M</option>
+                        <option value="6M">6M</option>
+                        <option value="1Y" selected>1Y</option>
+                        <option value="3Y">3Y</option>
+                        <option value="5Y">5Y</option>
+                        <option value="ALL">All Time</option>
+                    </select>
+                    <button id="refresh-btn" class="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 text-sm">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <div class="container mx-auto px-4 py-6">
+        
+        <!-- Portfolio Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <!-- Total Portfolio Value -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Total Portfolio Value</h3>
+                <div class="text-3xl font-bold text-blue-600" id="total-value">zł 0.00</div>
+                <div class="text-sm text-gray-600 mt-1" id="total-value-change">+zł 0.00 (0.00%)</div>
+            </div>
+
+            <!-- Unrealized P&L -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Unrealized P&L</h3>
+                <div class="text-3xl font-bold" id="unrealized-pl">zł 0.00</div>
+                <div class="text-sm text-gray-600 mt-1" id="unrealized-pl-percent">0.00%</div>
+            </div>
+
+            <!-- Realized P&L -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Realized P&L</h3>
+                <div class="text-3xl font-bold" id="realized-pl">zł 0.00</div>
+                <div class="text-sm text-gray-600 mt-1" id="realized-pl-ytd">YTD: zł 0.00</div>
+            </div>
+
+            <!-- Total Dividends -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Total Dividends</h3>
+                <div class="text-3xl font-bold text-green-600" id="total-dividends">zł 0.00</div>
+                <div class="text-sm text-gray-600 mt-1" id="dividend-yield">Yield: 0.00%</div>
+            </div>
+
+        </div>
+
+        <!-- Advanced Analytics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            
+            <!-- Sharpe Ratio -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="text-xs font-medium text-gray-500 mb-1">Sharpe Ratio</h4>
+                <div class="text-2xl font-bold" id="sharpe-ratio">0.00</div>
+            </div>
+
+            <!-- Max Drawdown -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="text-xs font-medium text-gray-500 mb-1">Max Drawdown</h4>
+                <div class="text-2xl font-bold text-red-500" id="max-drawdown">0.00%</div>
+            </div>
+
+            <!-- Volatility -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="text-xs font-medium text-gray-500 mb-1">Volatility</h4>
+                <div class="text-2xl font-bold" id="volatility">0.00%</div>
+            </div>
+
+            <!-- VaR (95%) -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="text-xs font-medium text-gray-500 mb-1">VaR (95%)</h4>
+                <div class="text-2xl font-bold text-orange-500" id="var-95">zł 0</div>
+            </div>
+
+            <!-- Beta -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="text-xs font-medium text-gray-500 mb-1">Beta (S&P500)</h4>
+                <div class="text-2xl font-bold" id="beta">0.00</div>
+            </div>
+
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            
+            <!-- Portfolio Value Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Portfolio Value Over Time</h3>
+                    <select id="chart1-metric" class="text-sm border rounded px-2 py-1">
+                        <option value="value">Market Value</option>
+                        <option value="cost">Cost Basis</option>
+                        <option value="both" selected>Both</option>
+                    </select>
+                </div>
+                <canvas id="portfolio-value-chart" height="300"></canvas>
+            </div>
+
+            <!-- P&L Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">P&L Over Time</h3>
+                    <select id="chart2-metric" class="text-sm border rounded px-2 py-1">
+                        <option value="unrealized" selected>Unrealized P&L</option>
+                        <option value="realized">Realized P&L</option>
+                        <option value="total">Total P&L</option>
+                    </select>
+                </div>
+                <canvas id="pl-chart" height="300"></canvas>
+            </div>
+
+        </div>
+
+        <!-- More Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            
+            <!-- Dividends Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Dividend Income Over Time</h3>
+                <canvas id="dividends-chart" height="300"></canvas>
+            </div>
+
+            <!-- Benchmark Comparison -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">vs Benchmarks</h3>
+                    <select id="benchmark-selector" class="text-sm border rounded px-2 py-1">
+                        <option value="SPY">S&P 500</option>
+                        <option value="WIG20">WIG20</option>
+                        <option value="BTC">Bitcoin</option>
+                        <option value="MSCI">MSCI World</option>
+                        <option value="CUSTOM" selected>Custom Blend</option>
+                    </select>
+                </div>
+                <canvas id="benchmark-chart" height="300"></canvas>
+            </div>
+
+        </div>
+
+        <!-- Portfolio Breakdown -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Market Allocation -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Market Allocation</h3>
+                <canvas id="market-allocation-chart" height="250"></canvas>
+            </div>
+
+            <!-- Sector Allocation -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Sector Allocation</h3>
+                <canvas id="sector-allocation-chart" height="250"></canvas>
+            </div>
+
+            <!-- Currency Exposure -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Currency Exposure</h3>
+                <canvas id="currency-chart" height="250"></canvas>
+            </div>
+
+        </div>
+
+        <!-- Holdings Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold">Current Holdings</h3>
+                    <div class="flex space-x-2">
+                        <input type="text" id="search-holdings" placeholder="Search holdings..." 
+                               class="px-3 py-1 border rounded-md text-sm">
+                        <select id="holdings-filter" class="text-sm border rounded px-2 py-1">
+                            <option value="all">All Markets</option>
+                            <option value="US">US Stocks</option>
+                            <option value="PL">PL Stocks</option>
+                            <option value="CRYPTO">Crypto</option>
+                            <option value="PHYSICAL">Physical</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Market Value</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Basis</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unrealized P&L</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unrealized %</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Realized P&L</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Dividends</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Yield</th>
+                        </tr>
+                    </thead>
+                    <tbody id="holdings-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Holdings will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tax Summary -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">📋 Annual Tax Summary</h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Current Year -->
+                <div>
+                    <h4 class="font-semibold mb-3">2024 Tax Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>PL Stocks Dividends:</span>
+                            <span class="font-medium" id="tax-pl-div">zł 0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>PL Stocks Realized P&L:</span>
+                            <span class="font-medium" id="tax-pl-gains">zł 0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>US Stocks Dividends:</span>
+                            <span class="font-medium" id="tax-us-div">zł 0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>US Stocks Realized P&L:</span>
+                            <span class="font-medium" id="tax-us-gains">zł 0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Crypto Realized P&L:</span>
+                            <span class="font-medium" id="tax-crypto-gains">zł 0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2 font-semibold">
+                            <span>Estimated Tax Owed:</span>
+                            <span id="tax-owed">zł 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historical Years -->
+                <div>
+                    <h4 class="font-semibold mb-3">Historical Performance</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-1">Year</th>
+                                    <th class="text-right py-1">Growth</th>
+                                    <th class="text-right py-1">CAGR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historical-performance">
+                                <!-- Years will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading portfolio data...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="analytics.js"></script>
+    <script src="charts.js"></script>
+    <script src="main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "name": "elite-portfolio-analytics",
+  "version": "1.0.0",
+  "description": "Professional portfolio tracker with advanced analytics, risk management, and tax optimization",
+  "main": "index.html",
+  "private": true,
+  "type": "module",
+  "keywords": [
+    "portfolio",
+    "tracker", 
+    "analytics",
+    "finance",
+    "investment",
+    "risk-management",
+    "tax-optimization",
+    "stocks",
+    "crypto",
+    "dividends"
+  ],
+  "author": "Elite Portfolio Analytics",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite preview --port 3000",
+    "lint": "eslint . --ext .js,.html",
+    "format": "prettier --write .",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^2.29.3"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/elite-portfolio-analytics.git"
+  },
+  "bugs": {
+    "url": "https://github.com/user/elite-portfolio-analytics/issues"
+  },
+  "homepage": "https://elite-portfolio-analytics.netlify.app"
+}
