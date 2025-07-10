@@ -1,6 +1,7 @@
 [build]
-  publish = "dist"
-  command = "npm run build"
+  publish = "."
+  command = "npm install"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -27,7 +28,7 @@
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net;
       style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
       img-src 'self' data: https:;
-      connect-src 'self' https://sheets.googleapis.com https://query1.finance.yahoo.com https://api.coingecko.com https://api.nbp.pl;
+      connect-src 'self' https://sheets.googleapis.com https://murb-portoflio-tracker.netlify.app;
       font-src 'self' https: data:;
       object-src 'none';
       base-uri 'self';
@@ -46,6 +47,14 @@
   for = "/api/*"
   [headers.values]
     Cache-Control = "public, max-age=300"
+
+# CORS for Netlify Functions
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
 
 # Gzip compression
 [build.processing]
