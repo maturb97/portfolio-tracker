@@ -680,6 +680,9 @@
             updateAllocationChart();
         }
 
+        // Store chart data globally to prevent infinite growth
+        let chartDataCache = null;
+        
         function updateValueChart() {
             const ctx = document.getElementById('value-chart').getContext('2d');
             
@@ -695,39 +698,61 @@
                 return;
             }
             
-            // Generate realistic daily data for last 30 days
-            const data = [];
-            const today = new Date();
-            const baseValue = Math.max(portfolio.totalValue * 0.85, 10000); // Reasonable starting point
-            let value = baseValue;
-            
-            for (let i = 30; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
+            // Generate chart data only once or when portfolio value changes significantly
+            if (!chartDataCache || Math.abs(chartDataCache.targetValue - portfolio.totalValue) > portfolio.totalValue * 0.1) {
+                console.log('Generating new chart data for portfolio value:', portfolio.totalValue);
                 
-                // Smaller, more realistic daily changes (max 2% daily change)
-                const dailyChange = (Math.random() - 0.5) * 0.02; // ±1% daily
-                value *= (1 + dailyChange);
+                const data = [];
+                const today = new Date();
+                const currentValue = portfolio.totalValue;
                 
-                // Ensure value stays within reasonable bounds
-                value = Math.max(value, baseValue * 0.7); // Don't go below 70% of base
-                value = Math.min(value, baseValue * 1.5); // Don't go above 150% of base
+                // Generate static historical data that doesn't change on each update
+                const seed = Math.floor(currentValue / 1000); // Use portfolio value as seed for consistency
+                Math.seedrandom = function(seed) {
+                    let m = 0x80000000; // 2**31
+                    let a = 1103515245;
+                    let c = 12345;
+                    let state = seed ? seed : Math.floor(Math.random() * (m - 1));
+                    
+                    return function() {
+                        state = (a * state + c) % m;
+                        return state / (m - 1);
+                    };
+                };
                 
-                data.push({
-                    x: date,
-                    y: Math.round(value * 100) / 100 // Round to 2 decimal places
-                });
+                const rng = Math.seedrandom(seed);
+                let value = currentValue * 0.9; // Start 10% lower than current
+                
+                for (let i = 30; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    
+                    // Use seeded random for consistent results
+                    const dailyChange = (rng() - 0.5) * 0.015; // ±0.75% daily
+                    value *= (1 + dailyChange);
+                    
+                    data.push({
+                        x: date,
+                        y: Math.round(value * 100) / 100
+                    });
+                }
+                
+                // Set final value to current portfolio value
+                data[data.length - 1].y = currentValue;
+                
+                chartDataCache = {
+                    data: data,
+                    targetValue: currentValue,
+                    timestamp: Date.now()
+                };
             }
-            
-            // Set final value close to current portfolio value
-            data[data.length - 1].y = portfolio.totalValue;
             
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [{
                         label: 'Portfolio Value',
-                        data: data,
+                        data: chartDataCache.data,
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 2,
@@ -752,8 +777,8 @@
                         },
                         y: {
                             beginAtZero: false,
-                            min: Math.min(...data.map(d => d.y)) * 0.95,
-                            max: Math.max(...data.map(d => d.y)) * 1.05,
+                            min: Math.min(...chartDataCache.data.map(d => d.y)) * 0.95,
+                            max: Math.max(...chartDataCache.data.map(d => d.y)) * 1.05,
                             ticks: {
                                 callback: function(value) {
                                     return 'zł ' + value.toLocaleString('pl-PL', {minimumFractionDigits: 0});
