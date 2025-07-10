@@ -6,10 +6,7 @@
 [build.environment]
   NODE_VERSION = "18"
 
-[[redirects]]
-  from = "/"
-  to = "/simple.html"
-  status = 200
+# No redirects needed - index.html is the main page
 
 [[headers]]
   for = "/.netlify/functions/*"

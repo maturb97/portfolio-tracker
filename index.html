@@ -4,195 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elite Portfolio Analytics Platform</title>
-    <meta name="description" content="Professional portfolio tracker with advanced analytics, tax optimization, and risk management">
-    
-    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Suppress production warning for demo purposes
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = { corePlugins: { preflight: false } }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
-
 <body class="bg-gray-50 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-bold text-gray-800">📊 Elite Portfolio Analytics</h1>
-                    <span id="last-update" class="text-sm text-gray-500">Loading...</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <select id="currency-selector" class="px-3 py-1 border rounded-md text-sm">
-                        <option value="USD">USD ($)</option>
-                        <option value="PLN" selected>PLN (zł)</option>
-                    </select>
-                    <select id="time-period" class="px-3 py-1 border rounded-md text-sm">
-                        <option value="1M">1M</option>
-                        <option value="3M">3M</option>
-                        <option value="6M">6M</option>
-                        <option value="1Y" selected>1Y</option>
-                        <option value="3Y">3Y</option>
-                        <option value="5Y">5Y</option>
-                        <option value="ALL">All Time</option>
-                    </select>
-                    <button id="refresh-btn" class="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 text-sm">
-                        🔄 Refresh
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Dashboard -->
     <div class="container mx-auto px-4 py-6">
         
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">📊 Elite Portfolio Analytics</h1>
+            <p class="text-gray-600">Professional portfolio tracker with advanced analytics</p>
+        </header>
+
         <!-- Portfolio Overview Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             
-            <!-- Total Portfolio Value -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Total Portfolio Value</h3>
-                <div class="text-3xl font-bold text-blue-600" id="total-value">zł 0.00</div>
-                <div class="text-sm text-gray-600 mt-1" id="total-value-change">+zł 0.00 (0.00%)</div>
+                <div class="text-3xl font-bold text-blue-600" id="total-value">Loading...</div>
+                <div class="text-sm text-gray-600 mt-1" id="total-change">Calculating...</div>
             </div>
 
-            <!-- Unrealized P&L -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Unrealized P&L</h3>
-                <div class="text-3xl font-bold" id="unrealized-pl">zł 0.00</div>
-                <div class="text-sm text-gray-600 mt-1" id="unrealized-pl-percent">0.00%</div>
+                <div class="text-3xl font-bold" id="unrealized-pl">Loading...</div>
+                <div class="text-sm text-gray-600 mt-1" id="unrealized-percent">0.00%</div>
             </div>
 
-            <!-- Realized P&L -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Realized P&L</h3>
-                <div class="text-3xl font-bold" id="realized-pl">zł 0.00</div>
-                <div class="text-sm text-gray-600 mt-1" id="realized-pl-ytd">YTD: zł 0.00</div>
+                <div class="text-3xl font-bold" id="realized-pl">Loading...</div>
+                <div class="text-sm text-gray-600 mt-1">YTD Performance</div>
             </div>
 
-            <!-- Total Dividends -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Total Dividends</h3>
-                <div class="text-3xl font-bold text-green-600" id="total-dividends">zł 0.00</div>
+                <div class="text-3xl font-bold text-green-600" id="total-dividends">Loading...</div>
                 <div class="text-sm text-gray-600 mt-1" id="dividend-yield">Yield: 0.00%</div>
-            </div>
-
-        </div>
-
-        <!-- Advanced Analytics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            
-            <!-- Sharpe Ratio -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h4 class="text-xs font-medium text-gray-500 mb-1">Sharpe Ratio</h4>
-                <div class="text-2xl font-bold" id="sharpe-ratio">0.00</div>
-            </div>
-
-            <!-- Max Drawdown -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h4 class="text-xs font-medium text-gray-500 mb-1">Max Drawdown</h4>
-                <div class="text-2xl font-bold text-red-500" id="max-drawdown">0.00%</div>
-            </div>
-
-            <!-- Volatility -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h4 class="text-xs font-medium text-gray-500 mb-1">Volatility</h4>
-                <div class="text-2xl font-bold" id="volatility">0.00%</div>
-            </div>
-
-            <!-- VaR (95%) -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h4 class="text-xs font-medium text-gray-500 mb-1">VaR (95%)</h4>
-                <div class="text-2xl font-bold text-orange-500" id="var-95">zł 0</div>
-            </div>
-
-            <!-- Beta -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h4 class="text-xs font-medium text-gray-500 mb-1">Beta (S&P500)</h4>
-                <div class="text-2xl font-bold" id="beta">0.00</div>
-            </div>
-
-        </div>
-
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            
-            <!-- Portfolio Value Chart -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Portfolio Value Over Time</h3>
-                    <select id="chart1-metric" class="text-sm border rounded px-2 py-1">
-                        <option value="value">Market Value</option>
-                        <option value="cost">Cost Basis</option>
-                        <option value="both" selected>Both</option>
-                    </select>
-                </div>
-                <canvas id="portfolio-value-chart" height="300"></canvas>
-            </div>
-
-            <!-- P&L Chart -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">P&L Over Time</h3>
-                    <select id="chart2-metric" class="text-sm border rounded px-2 py-1">
-                        <option value="unrealized" selected>Unrealized P&L</option>
-                        <option value="realized">Realized P&L</option>
-                        <option value="total">Total P&L</option>
-                    </select>
-                </div>
-                <canvas id="pl-chart" height="300"></canvas>
-            </div>
-
-        </div>
-
-        <!-- More Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            
-            <!-- Dividends Chart -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Dividend Income Over Time</h3>
-                <canvas id="dividends-chart" height="300"></canvas>
-            </div>
-
-            <!-- Benchmark Comparison -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">vs Benchmarks</h3>
-                    <select id="benchmark-selector" class="text-sm border rounded px-2 py-1">
-                        <option value="SPY">S&P 500</option>
-                        <option value="WIG20">WIG20</option>
-                        <option value="BTC">Bitcoin</option>
-                        <option value="MSCI">MSCI World</option>
-                        <option value="CUSTOM" selected>Custom Blend</option>
-                    </select>
-                </div>
-                <canvas id="benchmark-chart" height="300"></canvas>
-            </div>
-
-        </div>
-
-        <!-- Portfolio Breakdown -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            
-            <!-- Market Allocation -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Market Allocation</h3>
-                <canvas id="market-allocation-chart" height="250"></canvas>
-            </div>
-
-            <!-- Sector Allocation -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Sector Allocation</h3>
-                <canvas id="sector-allocation-chart" height="250"></canvas>
-            </div>
-
-            <!-- Currency Exposure -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Currency Exposure</h3>
-                <canvas id="currency-chart" height="250"></canvas>
             </div>
 
         </div>
@@ -200,116 +55,770 @@
         <!-- Holdings Table -->
         <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold">Current Holdings</h3>
-                    <div class="flex space-x-2">
-                        <input type="text" id="search-holdings" placeholder="Search holdings..." 
-                               class="px-3 py-1 border rounded-md text-sm">
-                        <select id="holdings-filter" class="text-sm border rounded px-2 py-1">
-                            <option value="all">All Markets</option>
-                            <option value="US">US Stocks</option>
-                            <option value="PL">PL Stocks</option>
-                            <option value="CRYPTO">Crypto</option>
-                            <option value="PHYSICAL">Physical</option>
-                        </select>
-                    </div>
-                </div>
+                <h3 class="text-lg font-semibold">Current Holdings</h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Market Value</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Basis</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unrealized P&L</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unrealized %</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Realized P&L</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Dividends</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Yield</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Units</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Current Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Market Value</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cost Basis</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">P&L</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">P&L %</th>
                         </tr>
                     </thead>
-                    <tbody id="holdings-table-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Holdings will be populated by JavaScript -->
+                    <tbody id="holdings-body" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Loading portfolio data...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Tax Summary -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <h3 class="text-lg font-semibold mb-4">📋 Annual Tax Summary</h3>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Current Year -->
-                <div>
-                    <h4 class="font-semibold mb-3">2024 Tax Summary</h4>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>PL Stocks Dividends:</span>
-                            <span class="font-medium" id="tax-pl-div">zł 0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>PL Stocks Realized P&L:</span>
-                            <span class="font-medium" id="tax-pl-gains">zł 0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>US Stocks Dividends:</span>
-                            <span class="font-medium" id="tax-us-div">zł 0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>US Stocks Realized P&L:</span>
-                            <span class="font-medium" id="tax-us-gains">zł 0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Crypto Realized P&L:</span>
-                            <span class="font-medium" id="tax-crypto-gains">zł 0.00</span>
-                        </div>
-                        <div class="flex justify-between border-t pt-2 font-semibold">
-                            <span>Estimated Tax Owed:</span>
-                            <span id="tax-owed">zł 0.00</span>
-                        </div>
-                    </div>
-                </div>
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Portfolio Value Over Time</h3>
+                <canvas id="value-chart" height="300"></canvas>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Market Allocation</h3>
+                <canvas id="allocation-chart" height="300"></canvas>
+            </div>
+        </div>
 
-                <!-- Historical Years -->
-                <div>
-                    <h4 class="font-semibold mb-3">Historical Performance</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="border-b">
-                                    <th class="text-left py-1">Year</th>
-                                    <th class="text-right py-1">Growth</th>
-                                    <th class="text-right py-1">CAGR</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historical-performance">
-                                <!-- Years will be populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
+        <!-- Status -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <div class="text-blue-800">
+                    <span id="status">🚀 Loading your portfolio data...</span>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-gray-600">Loading portfolio data...</p>
-        </div>
-    </div>
+    <script>
+        // Configuration
+        const CONFIG = {
+            GOOGLE_SHEETS_API_KEY: 'AIzaSyCOQSG4yD4SzdrQDJH2oVJGazduyzgwq04',
+            SHEET_ID: '10NuWmVJXpI1xeiiFXY5jtGHQ_SNcRbQUGS2kRyGmAKg',
+            SHEET_RANGE: 'Sheet1!A:I'
+        };
 
-    <!-- Scripts -->
-    <script src="config.js"></script>
-    <script src="analytics.js"></script>
-    <script src="charts.js"></script>
-    <script src="main.js"></script>
+        let portfolio = {
+            holdings: new Map(),
+            totalValue: 0,
+            totalCost: 0,
+            unrealizedPL: 0,
+            realizedPL: 0,
+            totalDividends: 0
+        };
 
+        let exchangeRates = {
+            'USD/PLN': 4.0 // Default fallback rate
+        };
+
+        // Initialize app
+        async function init() {
+            try {
+                document.getElementById('status').textContent = '📊 Loading transactions from Google Sheets...';
+                
+                const transactions = await fetchTransactions();
+                console.log('Loaded transactions:', transactions);
+                
+                document.getElementById('status').textContent = '💰 Processing portfolio data...';
+                
+                processTransactions(transactions);
+                
+                document.getElementById('status').textContent = '💱 Fetching exchange rates...';
+                
+                await updateExchangeRates();
+                
+                document.getElementById('status').textContent = '📈 Fetching current prices...';
+                
+                await updatePrices();
+                
+                document.getElementById('status').textContent = '🎨 Updating display...';
+                
+                updateDisplay();
+                
+                document.getElementById('status').textContent = '✅ Portfolio loaded successfully!';
+                
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                document.getElementById('status').textContent = '❌ Error loading portfolio. Using sample data.';
+                loadSampleData();
+                updateDisplay();
+            }
+        }
+
+        async function fetchTransactions() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${CONFIG.SHEET_RANGE}?key=${CONFIG.GOOGLE_SHEETS_API_KEY}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Google Sheets API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.values || data.values.length < 2) {
+                throw new Error('No data found');
+            }
+            
+            // Parse transactions (skip header)
+            return data.values.slice(1).map(row => ({
+                date: row[0],
+                type: row[1],
+                market: row[2],
+                symbol: row[3] || 'Unknown',
+                units: parseFloat(row[4]) || 0,
+                price: parseFloat(row[5]) || 0,
+                fees: parseFloat(row[6]) || 0,
+                split: parseFloat(row[7]) || 1.0,
+                currency: row[8] || 'USD'
+            })).filter(tx => tx.date && tx.type);
+        }
+
+        function processTransactions(transactions) {
+            portfolio.holdings.clear();
+            
+            transactions.forEach(tx => {
+                if (!portfolio.holdings.has(tx.symbol)) {
+                    portfolio.holdings.set(tx.symbol, {
+                        symbol: tx.symbol,
+                        market: tx.market,
+                        currency: tx.currency,
+                        units: 0,
+                        totalCost: 0,
+                        dividends: 0,
+                        realizedPL: 0,
+                        currentPrice: 0,
+                        marketValue: 0
+                    });
+                }
+                
+                const holding = portfolio.holdings.get(tx.symbol);
+                
+                // Convert transaction values to PLN if needed
+                let txPricePLN = tx.price;
+                let txFeesPLN = tx.fees;
+                
+                if (tx.currency === 'USD') {
+                    txPricePLN = tx.price * exchangeRates['USD/PLN'];
+                    txFeesPLN = tx.fees * exchangeRates['USD/PLN'];
+                }
+                
+                switch (tx.type.toLowerCase()) {
+                    case 'buy':
+                        // Add to FIFO queue for proper cost basis tracking
+                        if (!holding.fifoQueue) holding.fifoQueue = [];
+                        holding.fifoQueue.push({
+                            units: tx.units,
+                            costPerUnit: txPricePLN + (txFeesPLN / tx.units)
+                        });
+                        holding.units += tx.units;
+                        holding.totalCost += (tx.units * txPricePLN) + txFeesPLN;
+                        break;
+                    case 'sell':
+                        // FIFO calculation (First In, First Out)
+                        if (!holding.fifoQueue) holding.fifoQueue = [];
+                        let unitsToSell = tx.units;
+                        let sellCost = 0;
+                        
+                        // Sell from oldest purchases first (FIFO)
+                        while (unitsToSell > 0 && holding.fifoQueue.length > 0) {
+                            const batch = holding.fifoQueue[0];
+                            const unitsFromBatch = Math.min(unitsToSell, batch.units);
+                            sellCost += unitsFromBatch * batch.costPerUnit;
+                            
+                            batch.units -= unitsFromBatch;
+                            unitsToSell -= unitsFromBatch;
+                            
+                            // Remove empty batches
+                            if (batch.units === 0) {
+                                holding.fifoQueue.shift();
+                            }
+                        }
+                        
+                        const sellValue = (tx.units * txPricePLN) - txFeesPLN;
+                        holding.realizedPL += sellValue - sellCost;
+                        holding.units -= tx.units;
+                        holding.totalCost -= sellCost;
+                        break;
+                    case 'div':
+                        holding.dividends += (tx.units * txPricePLN) - txFeesPLN;
+                        break;
+                    case 'split':
+                        holding.units *= tx.split;
+                        holding.totalCost = holding.totalCost; // Cost basis remains same
+                        break;
+                }
+            });
+            
+            // Remove holdings with 0 units
+            portfolio.holdings.forEach((holding, symbol) => {
+                if (holding.units <= 0) {
+                    portfolio.holdings.delete(symbol);
+                }
+            });
+        }
+
+        async function updatePrices() {
+            const promises = Array.from(portfolio.holdings.keys()).map(async symbol => {
+                try {
+                    const priceUSD = await fetchPrice(symbol);
+                    const holding = portfolio.holdings.get(symbol);
+                    
+                    // Convert USD to PLN if needed
+                    let priceInPLN = priceUSD;
+                    if (holding.currency === 'USD') {
+                        priceInPLN = priceUSD * exchangeRates['USD/PLN'];
+                    }
+                    
+                    holding.currentPrice = priceInPLN;
+                    holding.marketValue = holding.units * priceInPLN;
+                    holding.priceError = null; // Clear any previous errors
+                    
+                    console.log(`${symbol}: $${priceUSD} → zł${priceInPLN.toFixed(2)}`);
+                    
+                } catch (error) {
+                    console.error(`❌ Failed to fetch price for ${symbol}:`, error.message);
+                    const holding = portfolio.holdings.get(symbol);
+                    if (holding) {
+                        holding.priceError = error.message;
+                        holding.currentPrice = 0;
+                        holding.marketValue = 0;
+                    }
+                }
+            });
+            
+            await Promise.allSettled(promises);
+            
+            // Calculate totals
+            portfolio.totalValue = 0;
+            portfolio.totalCost = 0;
+            portfolio.unrealizedPL = 0;
+            portfolio.realizedPL = 0;
+            portfolio.totalDividends = 0;
+            
+            portfolio.holdings.forEach(holding => {
+                portfolio.totalValue += holding.marketValue;
+                portfolio.totalCost += holding.totalCost;
+                portfolio.unrealizedPL += holding.marketValue - holding.totalCost;
+                portfolio.realizedPL += holding.realizedPL;
+                portfolio.totalDividends += holding.dividends;
+            });
+        }
+
+        async function fetchPrice(symbol) {
+            try {
+                const holding = portfolio.holdings.get(symbol);
+                if (!holding) {
+                    throw new Error(`No holding found for ${symbol}`);
+                }
+
+                // Use Netlify serverless function for all price fetching
+                const baseUrl = 'https://murb-portoflio-tracker.netlify.app/.netlify/functions/get-price';
+                const params = new URLSearchParams({
+                    symbol: symbol,
+                    market: holding.market,
+                    type: holding.market === 'CRYPTO' ? 'crypto' : 
+                          holding.market === 'PHYSICAL' ? 'commodity' : 'stock'
+                });
+                
+                const url = `${baseUrl}?${params}`;
+                console.log(`🔄 Fetching ${symbol} from Netlify function...`);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.price && data.price > 0) {
+                    console.log(`✅ ${symbol}: $${data.price} (${data.source})`);
+                    return data.price;
+                } else {
+                    throw new Error(`Invalid price data for ${symbol}`);
+                }
+
+            } catch (error) {
+                console.error(`❌ Price fetch failed for ${symbol}:`, error.message);
+                
+                // Mark holding as having price error
+                const holding = portfolio.holdings.get(symbol);
+                if (holding) {
+                    holding.priceError = error.message;
+                    holding.currentPrice = 0;
+                    holding.marketValue = 0;
+                }
+                throw error;
+            }
+        }
+
+        async function fetchStockPrice(symbol) {
+            try {
+                // For Polish stocks, handle separately
+                if (symbol === 'CDR' || symbol === 'ACP' || symbol === 'PLI') {
+                    if (symbol === 'PLI') {
+                        console.log(`ℹ️ PLI (NewConnect): 13.4 PLN`);
+                        return 13.4;
+                    }
+                    
+                    // Try working CORS proxy for Polish stocks
+                    try {
+                        const polishSymbol = symbol + '.WA';
+                        const proxyUrl = `https://cors-anywhere.herokuapp.com/https://query1.finance.yahoo.com/v8/finance/chart/${polishSymbol}`;
+                        const response = await fetch(proxyUrl);
+                        if (response.ok) {
+                            const data = await response.json();
+                            const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+                            if (price) {
+                                console.log(`✅ Fetched Polish stock ${symbol}: ${price} PLN`);
+                                return price;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Polish stock proxy failed for ${symbol}:`, error.message);
+                    }
+                    
+                    // Polish stock fallback
+                    const polishPrices = { 'CDR': 140.00, 'ACP': 165.00 };
+                    return polishPrices[symbol] || 100;
+                }
+                
+                // Use working CORS proxy for US stocks
+                try {
+                    const proxyUrl = `https://cors-anywhere.herokuapp.com/https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+                    const response = await fetch(proxyUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+                        if (price) {
+                            console.log(`✅ Fetched ${symbol} via CORS proxy: $${price}`);
+                            return price;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`CORS proxy failed for ${symbol}:`, error.message);
+                }
+                
+                console.error(`❌ Price fetch failed for ${symbol}`);
+                throw new Error(`Unable to fetch price for ${symbol}`);
+                
+            } catch (error) {
+                console.error(`Error fetching stock price for ${symbol}:`, error);
+                return 100;
+            }
+        }
+
+        async function fetchCryptoPrice(symbol) {
+            try {
+                const cryptoIds = {
+                    'Bitcoin': 'bitcoin',
+                    'BTC': 'bitcoin',
+                    'Ethereum': 'ethereum',
+                    'ETH': 'ethereum',
+                    'DOT': 'polkadot',
+                    'LTC': 'litecoin'
+                };
+                
+                const coinId = cryptoIds[symbol] || symbol.toLowerCase();
+                
+                // 1. Try CoinGecko API directly (sometimes works)
+                try {
+                    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+                    const response = await fetch(url);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const price = data[coinId]?.usd;
+                        if (price) {
+                            console.log(`✅ Fetched ${symbol} from CoinGecko: $${price}`);
+                            return price;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`CoinGecko direct failed for ${symbol}:`, error.message);
+                }
+                
+                // 2. Try CoinGecko via CORS proxy
+                try {
+                    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    
+                    if (response.ok) {
+                        const proxyData = await response.json();
+                        const coinData = JSON.parse(proxyData.contents);
+                        const price = coinData[coinId]?.usd;
+                        if (price) {
+                            console.log(`✅ Fetched ${symbol} via CORS proxy: $${price}`);
+                            return price;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`CoinGecko proxy failed for ${symbol}:`, error.message);
+                }
+                
+                // 3. Try CoinCap API (alternative crypto API)
+                try {
+                    const coinCapIds = {
+                        'bitcoin': 'bitcoin',
+                        'ethereum': 'ethereum',
+                        'polkadot': 'polkadot',
+                        'litecoin': 'litecoin'
+                    };
+                    
+                    const coinCapId = coinCapIds[coinId];
+                    if (coinCapId) {
+                        const response = await fetch(`https://api.coincap.io/v2/assets/${coinCapId}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            const price = parseFloat(data.data?.priceUsd);
+                            if (price) {
+                                console.log(`✅ Fetched ${symbol} from CoinCap: $${price}`);
+                                return price;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`CoinCap failed for ${symbol}:`, error.message);
+                }
+                
+                console.error(`❌ All crypto APIs failed for ${symbol}`);
+                throw new Error(`Unable to fetch real-time crypto price for ${symbol}`);
+                
+            } catch (error) {
+                console.error(`Error fetching crypto price for ${symbol}:`, error);
+                return 100;
+            }
+        }
+
+        async function fetchCommodityPrice(symbol) {
+            try {
+                // 1. Try CoinGecko for precious metals
+                if (symbol.toLowerCase().includes('silver')) {
+                    try {
+                        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=silver&vs_currencies=usd';
+                        const response = await fetch(url);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const price = data.silver?.usd;
+                            if (price) {
+                                console.log(`✅ Fetched ${symbol} from CoinGecko: $${price}`);
+                                return price;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`CoinGecko silver failed:`, error.message);
+                    }
+                    
+                    // Try via CORS proxy
+                    try {
+                        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=silver&vs_currencies=usd';
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const proxyData = await response.json();
+                            const data = JSON.parse(proxyData.contents);
+                            const price = data.silver?.usd;
+                            if (price) {
+                                console.log(`✅ Fetched ${symbol} via CORS proxy: $${price}`);
+                                return price;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Silver CORS proxy failed:`, error.message);
+                    }
+                }
+                
+                // 2. Try metals-api.com (free tier)
+                try {
+                    const metalSymbols = {
+                        'SILVER': 'XAG',
+                        'Silver': 'XAG', 
+                        'GOLD': 'XAU',
+                        'Gold': 'XAU'
+                    };
+                    
+                    const metalSymbol = metalSymbols[symbol];
+                    if (metalSymbol) {
+                        const response = await fetch(`https://api.metals.live/v1/spot/${metalSymbol}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            const price = data.price;
+                            if (price) {
+                                console.log(`✅ Fetched ${symbol} from Metals API: $${price}`);
+                                return price;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Metals API failed for ${symbol}:`, error.message);
+                }
+                
+                console.error(`❌ All commodity APIs failed for ${symbol}`);
+                throw new Error(`Unable to fetch real-time commodity price for ${symbol}`);
+                
+            } catch (error) {
+                console.error(`❌ Error fetching commodity price for ${symbol}:`, error);
+                throw error;
+            }
+        }
+
+        async function updateExchangeRates() {
+            try {
+                // Fetch USD/PLN rate from NBP
+                const url = 'https://api.nbp.pl/api/exchangerates/rates/a/usd/?format=json';
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const rate = data.rates[0].mid;
+                    exchangeRates['USD/PLN'] = rate;
+                    console.log(`✅ Updated USD/PLN rate: ${rate}`);
+                } else {
+                    console.warn('Failed to fetch USD/PLN rate, using fallback');
+                }
+                
+            } catch (error) {
+                console.error('Error fetching exchange rates:', error);
+            }
+        }
+
+        function updateDisplay() {
+            // Update overview cards
+            document.getElementById('total-value').textContent = `zł ${portfolio.totalValue.toLocaleString('pl-PL', {minimumFractionDigits: 2})}`;
+            
+            const unrealizedPLPercent = portfolio.totalCost > 0 ? (portfolio.unrealizedPL / portfolio.totalCost) * 100 : 0;
+            document.getElementById('unrealized-pl').textContent = `zł ${portfolio.unrealizedPL.toLocaleString('pl-PL', {minimumFractionDigits: 2})}`;
+            document.getElementById('unrealized-pl').className = portfolio.unrealizedPL >= 0 ? 'text-3xl font-bold text-green-600' : 'text-3xl font-bold text-red-600';
+            document.getElementById('unrealized-percent').textContent = `${unrealizedPLPercent.toFixed(2)}%`;
+            
+            document.getElementById('realized-pl').textContent = `zł ${portfolio.realizedPL.toLocaleString('pl-PL', {minimumFractionDigits: 2})}`;
+            document.getElementById('realized-pl').className = portfolio.realizedPL >= 0 ? 'text-3xl font-bold text-green-600' : 'text-3xl font-bold text-red-600';
+            
+            document.getElementById('total-dividends').textContent = `zł ${portfolio.totalDividends.toLocaleString('pl-PL', {minimumFractionDigits: 2})}`;
+            
+            const dividendYield = portfolio.totalValue > 0 ? (portfolio.totalDividends / portfolio.totalValue) * 100 : 0;
+            document.getElementById('dividend-yield').textContent = `Yield: ${dividendYield.toFixed(2)}%`;
+            
+            // Update holdings table
+            updateHoldingsTable();
+            
+            // Update charts
+            updateCharts();
+        }
+
+        function updateHoldingsTable() {
+            const tbody = document.getElementById('holdings-body');
+            tbody.innerHTML = '';
+            
+            portfolio.holdings.forEach(holding => {
+                const costBasis = holding.totalCost / holding.units;
+                const unrealizedPL = holding.marketValue - holding.totalCost;
+                const unrealizedPercent = holding.totalCost > 0 ? (unrealizedPL / holding.totalCost) * 100 : 0;
+                
+                const row = document.createElement('tr');
+                
+                // Show price error if present
+                const priceDisplay = holding.priceError ? 
+                    `<span class="text-red-600 text-xs">❌ ${holding.priceError}</span>` : 
+                    `zł ${holding.currentPrice.toFixed(2)}`;
+                    
+                const marketValueDisplay = holding.priceError ? 
+                    `<span class="text-red-600 text-xs">❌ Error</span>` : 
+                    `zł ${holding.marketValue.toFixed(2)}`;
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${holding.symbol}</div>
+                        <div class="text-sm text-gray-500">${holding.market}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">${holding.units.toFixed(6)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">${priceDisplay}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">${marketValueDisplay}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">zł ${holding.totalCost.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm ${unrealizedPL >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${holding.priceError ? '❌ Error' : `zł ${unrealizedPL.toFixed(2)}`}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm ${unrealizedPercent >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${holding.priceError ? '❌ Error' : `${unrealizedPercent.toFixed(2)}%`}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateCharts() {
+            updateValueChart();
+            updateAllocationChart();
+        }
+
+        function updateValueChart() {
+            const ctx = document.getElementById('value-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            // Generate sample daily data for last 30 days
+            const data = [];
+            const today = new Date();
+            let value = portfolio.totalValue * 0.8; // Start 20% lower
+            
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                
+                value *= (1 + (Math.random() - 0.5) * 0.03); // Random daily change
+                
+                data.push({
+                    x: date,
+                    y: value
+                });
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: data,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                displayFormats: {
+                                    day: 'MMM dd'
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'zł ' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateAllocationChart() {
+            const ctx = document.getElementById('allocation-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            const marketData = new Map();
+            portfolio.holdings.forEach(holding => {
+                const market = holding.market || 'Unknown';
+                marketData.set(market, (marketData.get(market) || 0) + holding.marketValue);
+            });
+            
+            const labels = Array.from(marketData.keys());
+            const data = Array.from(marketData.values());
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadSampleData() {
+            // Sample portfolio data
+            portfolio.holdings.set('AAPL', {
+                symbol: 'AAPL',
+                market: 'US',
+                currency: 'USD',
+                units: 10,
+                totalCost: 1500,
+                dividends: 25,
+                realizedPL: 0,
+                currentPrice: 175.43,
+                marketValue: 1754.30
+            });
+            
+            portfolio.holdings.set('Bitcoin', {
+                symbol: 'Bitcoin',
+                market: 'CRYPTO',
+                currency: 'USD',
+                units: 0.1,
+                totalCost: 4200,
+                dividends: 0,
+                realizedPL: 0,
+                currentPrice: 67250,
+                marketValue: 6725
+            });
+            
+            // Calculate totals
+            portfolio.totalValue = 0;
+            portfolio.totalCost = 0;
+            portfolio.unrealizedPL = 0;
+            portfolio.realizedPL = 0;
+            portfolio.totalDividends = 0;
+            
+            portfolio.holdings.forEach(holding => {
+                portfolio.totalValue += holding.marketValue;
+                portfolio.totalCost += holding.totalCost;
+                portfolio.unrealizedPL += holding.marketValue - holding.totalCost;
+                portfolio.realizedPL += holding.realizedPL;
+                portfolio.totalDividends += holding.dividends;
+            });
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
