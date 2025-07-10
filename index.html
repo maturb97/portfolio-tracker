@@ -680,161 +680,145 @@
             updateAllocationChart();
         }
 
-        // Store chart data globally to prevent infinite growth
-        let chartDataCache = null;
+        // Store chart instances to prevent multiple updates
+        let portfolioChart = null;
+        let allocationChart = null;
+        let chartsInitialized = false;
         
         function updateValueChart() {
             const ctx = document.getElementById('value-chart').getContext('2d');
             
-            // Destroy existing chart if it exists
-            const existingChart = Chart.getChart(ctx);
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            // Skip chart if portfolio value is invalid
+            // Skip if portfolio value is invalid
             if (!portfolio.totalValue || portfolio.totalValue <= 0 || !isFinite(portfolio.totalValue)) {
                 console.warn('Invalid portfolio value for chart:', portfolio.totalValue);
                 return;
             }
             
-            // Generate chart data only once or when portfolio value changes significantly
-            if (!chartDataCache || Math.abs(chartDataCache.targetValue - portfolio.totalValue) > portfolio.totalValue * 0.1) {
-                console.log('Generating new chart data for portfolio value:', portfolio.totalValue);
+            // Only create chart once, then update data
+            if (!portfolioChart) {
+                console.log('Creating portfolio chart with value:', portfolio.totalValue);
                 
+                // Generate FIXED historical data that never changes
                 const data = [];
                 const today = new Date();
                 const currentValue = portfolio.totalValue;
                 
-                // Generate static historical data that doesn't change on each update
-                const seed = Math.floor(currentValue / 1000); // Use portfolio value as seed for consistency
-                Math.seedrandom = function(seed) {
-                    let m = 0x80000000; // 2**31
-                    let a = 1103515245;
-                    let c = 12345;
-                    let state = seed ? seed : Math.floor(Math.random() * (m - 1));
-                    
-                    return function() {
-                        state = (a * state + c) % m;
-                        return state / (m - 1);
-                    };
-                };
+                // Create realistic but STATIC historical data
+                const historicalValues = [
+                    currentValue * 0.82, currentValue * 0.84, currentValue * 0.81, currentValue * 0.86,
+                    currentValue * 0.88, currentValue * 0.85, currentValue * 0.89, currentValue * 0.91,
+                    currentValue * 0.88, currentValue * 0.92, currentValue * 0.94, currentValue * 0.91,
+                    currentValue * 0.93, currentValue * 0.96, currentValue * 0.94, currentValue * 0.98,
+                    currentValue * 0.95, currentValue * 0.97, currentValue * 0.99, currentValue * 0.96,
+                    currentValue * 0.98, currentValue * 1.01, currentValue * 0.99, currentValue * 1.02,
+                    currentValue * 1.00, currentValue * 1.03, currentValue * 1.01, currentValue * 1.04,
+                    currentValue * 1.02, currentValue * 1.01, currentValue
+                ];
                 
-                const rng = Math.seedrandom(seed);
-                let value = currentValue * 0.9; // Start 10% lower than current
-                
-                for (let i = 30; i >= 0; i--) {
+                for (let i = 0; i < 31; i++) {
                     const date = new Date(today);
-                    date.setDate(date.getDate() - i);
-                    
-                    // Use seeded random for consistent results
-                    const dailyChange = (rng() - 0.5) * 0.015; // ±0.75% daily
-                    value *= (1 + dailyChange);
+                    date.setDate(date.getDate() - (30 - i));
                     
                     data.push({
                         x: date,
-                        y: Math.round(value * 100) / 100
+                        y: Math.round(historicalValues[i] * 100) / 100
                     });
                 }
                 
-                // Set final value to current portfolio value
-                data[data.length - 1].y = currentValue;
-                
-                chartDataCache = {
-                    data: data,
-                    targetValue: currentValue,
-                    timestamp: Date.now()
-                };
-            }
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: 'Portfolio Value',
-                        data: chartDataCache.data,
-                        borderColor: '#3B82F6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 0 // Disable animations for better performance
+                portfolioChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Portfolio Value',
+                            data: data,
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1
+                        }]
                     },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                displayFormats: {
-                                    day: 'MMM dd'
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false, // Completely disable animations
+                        interaction: {
+                            intersect: false
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    displayFormats: {
+                                        day: 'MMM dd'
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                min: Math.min(...data.map(d => d.y)) * 0.98,
+                                max: Math.max(...data.map(d => d.y)) * 1.02,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'zł ' + value.toLocaleString('pl-PL', {minimumFractionDigits: 0});
+                                    }
                                 }
                             }
                         },
-                        y: {
-                            beginAtZero: false,
-                            min: Math.min(...chartDataCache.data.map(d => d.y)) * 0.95,
-                            max: Math.max(...chartDataCache.data.map(d => d.y)) * 1.05,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'zł ' + value.toLocaleString('pl-PL', {minimumFractionDigits: 0});
-                                }
+                        plugins: {
+                            legend: {
+                                display: false
                             }
                         }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
                     }
-                }
-            });
+                });
+            } else {
+                console.log('Chart already exists, skipping recreation');
+            }
         }
 
         function updateAllocationChart() {
             const ctx = document.getElementById('allocation-chart').getContext('2d');
             
-            // Destroy existing chart if it exists
-            const existingChart = Chart.getChart(ctx);
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            const marketData = new Map();
-            portfolio.holdings.forEach(holding => {
-                const market = holding.market || 'Unknown';
-                marketData.set(market, (marketData.get(market) || 0) + holding.marketValue);
-            });
-            
-            const labels = Array.from(marketData.keys());
-            const data = Array.from(marketData.values());
-            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
+            // Only create chart once
+            if (!allocationChart) {
+                console.log('Creating allocation chart');
+                
+                const marketData = new Map();
+                portfolio.holdings.forEach(holding => {
+                    const market = holding.market || 'Unknown';
+                    marketData.set(market, (marketData.get(market) || 0) + holding.marketValue);
+                });
+                
+                const labels = Array.from(marketData.keys());
+                const data = Array.from(marketData.values());
+                const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+                
+                allocationChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false, // Disable animations
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
                         }
                     }
-                }
-            });
+                });
+            } else {
+                console.log('Allocation chart already exists, skipping recreation');
+            }
         }
 
         function loadSampleData() {
