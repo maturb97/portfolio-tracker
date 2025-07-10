@@ -275,14 +275,24 @@
                     const priceUSD = await fetchPrice(symbol);
                     const holding = portfolio.holdings.get(symbol);
                     
+                    // Validate price data
+                    if (!priceUSD || priceUSD <= 0 || !isFinite(priceUSD)) {
+                        throw new Error(`Invalid price data: ${priceUSD}`);
+                    }
+                    
                     // Convert USD to PLN if needed
                     let priceInPLN = priceUSD;
                     if (holding.currency === 'USD') {
                         priceInPLN = priceUSD * exchangeRates['USD/PLN'];
                     }
                     
-                    holding.currentPrice = priceInPLN;
-                    holding.marketValue = holding.units * priceInPLN;
+                    // Validate final price
+                    if (!isFinite(priceInPLN) || priceInPLN <= 0) {
+                        throw new Error(`Invalid calculated price: ${priceInPLN}`);
+                    }
+                    
+                    holding.currentPrice = Math.round(priceInPLN * 100) / 100; // Round to 2 decimals
+                    holding.marketValue = Math.round(holding.units * priceInPLN * 100) / 100;
                     holding.priceError = null; // Clear any previous errors
                     
                     console.log(`${symbol}: $${priceUSD} → zł${priceInPLN.toFixed(2)}`);
@@ -679,22 +689,38 @@
                 existingChart.destroy();
             }
             
-            // Generate sample daily data for last 30 days
+            // Skip chart if portfolio value is invalid
+            if (!portfolio.totalValue || portfolio.totalValue <= 0 || !isFinite(portfolio.totalValue)) {
+                console.warn('Invalid portfolio value for chart:', portfolio.totalValue);
+                return;
+            }
+            
+            // Generate realistic daily data for last 30 days
             const data = [];
             const today = new Date();
-            let value = portfolio.totalValue * 0.8; // Start 20% lower
+            const baseValue = Math.max(portfolio.totalValue * 0.85, 10000); // Reasonable starting point
+            let value = baseValue;
             
             for (let i = 30; i >= 0; i--) {
                 const date = new Date(today);
                 date.setDate(date.getDate() - i);
                 
-                value *= (1 + (Math.random() - 0.5) * 0.03); // Random daily change
+                // Smaller, more realistic daily changes (max 2% daily change)
+                const dailyChange = (Math.random() - 0.5) * 0.02; // ±1% daily
+                value *= (1 + dailyChange);
+                
+                // Ensure value stays within reasonable bounds
+                value = Math.max(value, baseValue * 0.7); // Don't go below 70% of base
+                value = Math.min(value, baseValue * 1.5); // Don't go above 150% of base
                 
                 data.push({
                     x: date,
-                    y: value
+                    y: Math.round(value * 100) / 100 // Round to 2 decimal places
                 });
             }
+            
+            // Set final value close to current portfolio value
+            data[data.length - 1].y = portfolio.totalValue;
             
             new Chart(ctx, {
                 type: 'line',
@@ -705,12 +731,16 @@
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 2,
-                        fill: true
+                        fill: true,
+                        tension: 0.1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 0 // Disable animations for better performance
+                    },
                     scales: {
                         x: {
                             type: 'time',
@@ -722,11 +752,18 @@
                         },
                         y: {
                             beginAtZero: false,
+                            min: Math.min(...data.map(d => d.y)) * 0.95,
+                            max: Math.max(...data.map(d => d.y)) * 1.05,
                             ticks: {
                                 callback: function(value) {
-                                    return 'zł ' + value.toFixed(0);
+                                    return 'zł ' + value.toLocaleString('pl-PL', {minimumFractionDigits: 0});
                                 }
                             }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
                         }
                     }
                 }
